@@ -19,3 +19,6 @@ __pycache__/
 # Sistema operacional
 .DS_Store
 Thumbs.db
+
+# Documentação local / roteiros
+docs/
