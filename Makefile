@@ -39,7 +39,7 @@ test-verbose:
 
 clean:
 	@echo "Limpando arquivos temporários locais..."
-	cd $(APP_DIR) && rm -rf __pycache__ tests/__pycache__
+	cd $(APP_DIR) && rm -rf __pycache__ tests/__pycache__ app/__pycache__
 	cd $(APP_DIR) && rm -rf .pytest_cache .ruff_cache *.pyc *.pyd
 
 # --- Comandos Docker Compose ---
