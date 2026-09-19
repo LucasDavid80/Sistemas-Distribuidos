@@ -69,3 +69,42 @@ def test_deletar_cliente(client):
     
     resposta_get = client.get(f"/clientes/{id_cliente}")
     assert resposta_get.status_code == 404
+
+# Teste Buscar cliente por ID com sucesso
+def test_buscar_cliente_sucesso(client):
+    resposta_post = client.post('/clientes/', json={'nome': 'George', 'email': 'george@email.com', 'idade': 22})
+    id_cliente = resposta_post.json()['id']
+    
+    response = client.get(f'/clientes/{id_cliente}')
+    assert response.status_code == 200
+    assert response.json()['nome'] == 'George'
+
+# Teste Atualizar cliente com sucesso (PUT)
+def test_atualizar_cliente_sucesso(client):
+    resposta_post = client.post('/clientes/', json={'nome': 'Hannah', 'email': 'hannah@email.com', 'idade': 27})
+    id_cliente = resposta_post.json()['id']
+    
+    response = client.put(f'/clientes/{id_cliente}', json={'nome': 'Hannah Updated', 'email': 'hannah.new@email.com', 'idade': 28})
+    assert response.status_code == 200
+    assert response.json()['nome'] == 'Hannah Updated'
+
+# Teste Atualizar cliente inexistente (404)
+def test_atualizar_cliente_inexistente(client):
+    response = client.put('/clientes/999', json={'nome': 'Ghost', 'email': 'ghost@email.com', 'idade': 99})
+    assert response.status_code == 404
+
+# Teste Atualizar cliente com e-mail duplicado de outro cliente (400)
+def test_atualizar_cliente_email_duplicado(client):
+    client.post('/clientes/', json={'nome': 'Ian', 'email': 'ian@email.com', 'idade': 30})
+    resposta_post2 = client.post('/clientes/', json={'nome': 'Jane', 'email': 'jane@email.com', 'idade': 31})
+    id_jane = resposta_post2.json()['id']
+    
+    # Tenta atualizar Jane com o e-mail do Ian
+    response = client.put(f'/clientes/{id_jane}', json={'nome': 'Jane', 'email': 'ian@email.com', 'idade': 31})
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'Email já cadastrado por outro cliente'}
+
+# Teste Deletar cliente inexistente (404)
+def test_deletar_cliente_inexistente(client):
+    response = client.delete('/clientes/999')
+    assert response.status_code == 404
