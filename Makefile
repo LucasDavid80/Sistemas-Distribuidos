@@ -27,11 +27,15 @@ help:
 # --- Comandos Locais ---
 run:
 	@echo "Iniciando aplicação localmente..."
-	cd $(APP_DIR) && poetry run uvicorn main:app --reload --port $(PORT)
+	cd $(APP_DIR) && poetry run uvicorn app.main:app --reload --port $(PORT)
 
 test:
 	@echo "Executando testes locais..."
 	cd $(APP_DIR) && poetry run pytest
+
+test-verbose:
+	@echo "Executando testes locais com saída detalhada..."
+	cd $(APP_DIR) && poetry run pytest -v
 
 clean:
 	@echo "Limpando arquivos temporários locais..."

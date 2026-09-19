@@ -1,13 +1,13 @@
 import pytest
 from fastapi.testclient import TestClient
-from main import app, clientes_db
+from app.main import app, clientes_db
 
 # Fixture criando o client e garantindo banco vazio antes de cada teste
 @pytest.fixture
 def client():
     # Limpa o banco de dados e reseta o contador de ID antes do teste rodar
     clientes_db.clear()
-    import main
+    from app import main
     main.contador_id = 1
     
     return TestClient(app)
