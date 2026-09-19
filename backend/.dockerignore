@@ -1,0 +1,36 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Caches e arquivos compilados Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Caches de testes e ferramentas de qualidade de código
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Variáveis de ambiente locais
+.env
+.env.*
+!.env.example
+
+# Configurações de IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Arquivos do Git
+.git/
+.gitignore
+
+# Logs
+*.log
