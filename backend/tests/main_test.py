@@ -1,41 +1,71 @@
 import pytest
 from fastapi.testclient import TestClient
-from main import app
+from main import app, clientes_db
 
-# Fixture criando o client, conforme exigido na atividade
+# Fixture criando o client e garantindo banco vazio antes de cada teste
 @pytest.fixture
 def client():
+    # Limpa o banco de dados e reseta o contador de ID antes do teste rodar
+    clientes_db.clear()
+    import main
+    main.contador_id = 1
+    
     return TestClient(app)
 
 def test_home(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Olá, Sistemas Distribuídos!"}
+    assert response.json() == {"message": "Bem-vindo ao Sistema de Clientes"}
 
-def test_hello_lucas(client):
-    response = client.get("/lucas")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Olá, Lucas!"}
-
-# Teste com parametrização para testar múltiplos produtos corretos de uma vez
-@pytest.mark.parametrize("produto_id, nome_esperado", [
-    (1, "Teclado"),
-    (2, "Mouse"),
-    (3, "Monitor"),
+# Teste de criação com Parametrização
+@pytest.mark.parametrize("nome, email, idade", [
+    ("Alice", "alice@email.com", 25),
+    ("Bob", "bob@email.com", 30),
+    ("Charlie", "charlie@email.com", 35),
 ])
-def test_buscar_produto_sucesso(client, produto_id, nome_esperado):
-    response = client.get(f"/produtos/{produto_id}")
+def test_criar_cliente_sucesso(client, nome, email, idade):
+    response = client.post("/clientes/", json={
+        "nome": nome,
+        "email": email,
+        "idade": idade
+    })
+    assert response.status_code == 201
+    dados = response.json()
+    assert dados["nome"] == nome
+    assert dados["email"] == email
+    assert "id" in dados
+
+# Teste Listar clientes
+def test_listar_clientes(client):
+    client.post("/clientes/", json={"nome": "Dave", "email": "dave@email.com", "idade": 40})
+    response = client.get("/clientes/")
     assert response.status_code == 200
-    assert response.json()["nome"] == nome_esperado
+    dados = response.json()
+    assert len(dados) == 1
+    assert dados[0]["nome"] == "Dave"
 
-# Teste de cenário de erro: Produto não encontrado (404)
-def test_buscar_produto_nao_encontrado(client):
-    response = client.get("/produtos/99")
+# Teste Cenário de Erro: Cliente Inexistente (404)
+def test_buscar_cliente_inexistente(client):
+    response = client.get("/clientes/999")
     assert response.status_code == 404
-    assert response.json() == {"detail": "Produto não encontrado"}
+    assert response.json() == {"detail": "Cliente não encontrado"}
 
-# Teste de cenário de erro: Input inválido (400)
-def test_buscar_produto_id_negativo(client):
-    response = client.get("/produtos/-5")
+# Teste Cenário de Erro: Email Duplicado (400)
+def test_criar_cliente_email_duplicado(client):
+    cliente_data = {"nome": "Eve", "email": "eve@email.com", "idade": 28}
+    client.post("/clientes/", json=cliente_data) # Primeiro vai com sucesso
+    
+    response = client.post("/clientes/", json=cliente_data) # Segundo deve falhar
     assert response.status_code == 400
-    assert response.json() == {"detail": "ID do produto não pode ser negativo"}
+    assert response.json() == {"detail": "Email já cadastrado"}
+
+# Teste Deletar cliente
+def test_deletar_cliente(client):
+    resposta_post = client.post("/clientes/", json={"nome": "Frank", "email": "frank@email.com", "idade": 50})
+    id_cliente = resposta_post.json()["id"]
+    
+    resposta_delete = client.delete(f"/clientes/{id_cliente}")
+    assert resposta_delete.status_code == 204
+    
+    resposta_get = client.get(f"/clientes/{id_cliente}")
+    assert resposta_get.status_code == 404
