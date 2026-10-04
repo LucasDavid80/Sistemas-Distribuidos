@@ -58,15 +58,53 @@ def test_reject_duplicate_email(client):
     assert response.json() == {"detail": "Email já cadastrado"}
 
 
+def test_patch_user(client):
+    user = client.post(
+        "/users/", json={"nome": "Carol", "email": "carol@email.com", "idade": 28}
+    ).json()
+
+    response = client.patch(
+        f"/users/{user['id']}",
+        json={"nome": "Carol Updated", "idade": 29},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": user["id"],
+        "nome": "Carol Updated",
+        "email": "carol@email.com",
+        "idade": 29,
+    }
+
+
+def test_patch_user_rejects_duplicate_email(client):
+    client.post(
+        "/users/", json={"nome": "Alice", "email": "alice@email.com", "idade": 25}
+    )
+    user = client.post(
+        "/users/", json={"nome": "Bob", "email": "bob@email.com", "idade": 30}
+    ).json()
+
+    response = client.patch(f"/users/{user['id']}", json={"email": "alice@email.com"})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Email já cadastrado"}
+
+
 @pytest.mark.parametrize(
     "method, path",
-    [("get", "/users/999"), ("put", "/users/999"), ("delete", "/users/999")],
+    [
+        ("get", "/users/999"),
+        ("put", "/users/999"),
+        ("patch", "/users/999"),
+        ("delete", "/users/999"),
+    ],
 )
 def test_missing_user_returns_not_found(client, method, path):
     payload = {"nome": "Ghost", "email": "ghost@email.com", "idade": 99}
     response = (
         getattr(client, method)(path, json=payload)
-        if method == "put"
+        if method in {"put", "patch"}
         else getattr(client, method)(path)
     )
 
