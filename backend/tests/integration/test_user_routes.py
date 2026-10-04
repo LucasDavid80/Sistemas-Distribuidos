@@ -64,8 +64,10 @@ def test_reject_duplicate_email(client):
 )
 def test_missing_user_returns_not_found(client, method, path):
     payload = {"nome": "Ghost", "email": "ghost@email.com", "idade": 99}
-    response = getattr(client, method)(
-        path, json=payload
-    ) if method == "put" else getattr(client, method)(path)
+    response = (
+        getattr(client, method)(path, json=payload)
+        if method == "put"
+        else getattr(client, method)(path)
+    )
 
     assert response.status_code == 404
