@@ -4,7 +4,9 @@ from app.schemas.user_schema import User, UserRole
 from app.services.user_service import get_user
 
 
-def current_user(x_user_id: int = Header(..., alias="X-User-Id")) -> User:
+def current_user(x_user_id: int | None = Header(None, alias="X-User-Id")) -> User:
+    if x_user_id is None:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado")
     user = get_user(x_user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="Usuário não autenticado")

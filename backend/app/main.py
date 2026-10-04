@@ -8,6 +8,7 @@ from app.api.routes.commerce_routes import (
     product_router,
     purchase_router,
 )
+from app.api.routes.root_routes import router as root_router
 from app.api.routes.user_routes import router as users_router
 
 clientes_db = _clientes_db
@@ -19,8 +20,4 @@ app.include_router(client_router)
 app.include_router(product_router)
 app.include_router(purchase_router)
 app.include_router(admin_router)
-
-
-@app.get("/")
-def home():
-    return {"message": "Bem-vindo ao Sistema de Clientes"}
+app.include_router(root_router)
