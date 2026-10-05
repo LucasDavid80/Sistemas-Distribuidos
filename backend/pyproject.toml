@@ -16,12 +16,35 @@ dependencies = [
 dev = [
     "pytest (>=9.1.1,<10.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
-    "ruff (>=0.16.4,<0.17.0)"
+    "ruff (>=0.16.4,<0.17.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)",
+    "httpx2 (>=2.13.0,<3.0.0)"
 ]
+
+[tool.poetry]
+package-mode = false
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (erros de sintaxe e imports não usados)
+    "I",    # isort (ordenação automática e padronizada de imports)
+    "UP",   # pyupgrade (garante sintaxe moderna de Python 3.12+)
+    "B",    # flake8-bugbear (pega bugs comuns)
+    "N",    # pep8-naming (garante nomes de variáveis e funções coerentes)
+]
+ignore = []

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    lint-and-format:
+      name: Ruff(lint and format)
+      runs-on: ubuntu-latest
+
+      defaults:
+        run:
+          working-directory: backend
+      
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
+
+        - name: Install Poetry
+          run: |
+            pipx install poetry
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+        - name: Setup Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: 3.13
+            cache: "poetry"
+            cache-dependency-path: backend/poetry.lock
+
+        - name: Install dependencies
+          run: poetry install --no-root
+        
+        - name: Check Formatting
+          run: poetry run ruff format --check 
+
+
+        - name: Lint Code
+          run: poetry run ruff check . 
+
+    test:
+      name: Pytest
+      runs-on: ubuntu-latest
+
+      defaults:
+        run:
+          working-directory: backend
+
+      steps:
+          - name: Checkout Code
+            uses: actions/checkout@v4
+
+          - name: Install Poetry
+            run: |
+              pipx install poetry
+              echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+          - name: Setup Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: 3.13
+              cache: "poetry"
+              cache-dependency-path: backend/poetry.lock
+
+          - name: Install dependencies
+            run: poetry install --no-root
+
+          - name: Run tests
+            run: poetry run pytest
