@@ -2,7 +2,7 @@ PYTHON = python
 APP_DIR = backend
 PORT = 8001
 
-.PHONY: help run test test-unit test-integration clean compose-up compose-down compose-logs compose-ps compose-clean compose-shell compose-backend compose-db compose-test
+.PHONY: help run lint test test-unit test-integration clean compose-up compose-down compose-logs compose-ps compose-clean compose-shell compose-backend compose-db compose-test
 
 help:
 	@echo "Uso: make [alvo]"
@@ -10,6 +10,7 @@ help:
 	@echo "Alvos Locais:"
 	@echo "  help             - Exibe os comandos disponíveis"
 	@echo "  run              - Executa a aplicação localmente com Poetry"
+	@echo "  lint             - Verifica a qualidade do código com Ruff"
 	@echo "  test             - Executa todos os testes localmente"
 	@echo "  test-unit        - Executa apenas os testes unitários"
 	@echo "  test-integration - Executa apenas os testes de integração"
@@ -33,6 +34,10 @@ help:
 run:
 	@echo "Iniciando aplicação localmente..."
 	cd $(APP_DIR) && poetry run uvicorn app.main:app --reload --port $(PORT)
+
+lint:
+	@echo "Verificando a qualidade do código..."
+	cd $(APP_DIR) && poetry run ruff check .
 
 test:
 	@echo "Executando testes locais..."
