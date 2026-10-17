@@ -13,9 +13,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 DbSession = Annotated[Session, Depends(get_db)]
 
 
-def _ensure_unique_email(
-    db: Session, email: str, user_id: int | None = None
-) -> None:
+def _ensure_unique_email(db: Session, email: str, user_id: int | None = None) -> None:
     existing = UserRepository(db).get_by_email(email)
     if existing is not None and existing.id != user_id:
         raise HTTPException(status_code=400, detail="Email já cadastrado")

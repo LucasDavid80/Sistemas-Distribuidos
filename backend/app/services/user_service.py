@@ -22,9 +22,7 @@ def get_user(db: Session, user_id: int) -> UserModel | None:
     return UserRepository(db).get(user_id)
 
 
-def update_user(
-    db: Session, user_id: int, user: UserCreate
-) -> UserModel | None:
+def update_user(db: Session, user_id: int, user: UserCreate) -> UserModel | None:
     repository = UserRepository(db)
     current_user = repository.get(user_id)
     if current_user is None:
@@ -37,9 +35,7 @@ def update_user(
     return current_user
 
 
-def patch_user(
-    db: Session, user_id: int, user: UserPatch
-) -> UserModel | None:
+def patch_user(db: Session, user_id: int, user: UserPatch) -> UserModel | None:
     repository = UserRepository(db)
     current_user = repository.get(user_id)
     if current_user is None:

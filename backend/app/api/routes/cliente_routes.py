@@ -64,9 +64,7 @@ def buscar_cliente(cliente_id: int, db: DbSession) -> Cliente:
 
 
 @router.put("/{cliente_id}", response_model=Cliente)
-def atualizar_cliente(
-    cliente_id: int, data: ClienteBase, db: DbSession
-) -> Cliente:
+def atualizar_cliente(cliente_id: int, data: ClienteBase, db: DbSession) -> Cliente:
     user = _get_client(db, cliente_id)
     if user is None:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")

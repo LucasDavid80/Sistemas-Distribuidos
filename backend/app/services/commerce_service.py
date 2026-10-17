@@ -10,9 +10,7 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.commerce_schema import ProductCreate, ProductPatch
 
 
-def create_product(
-    db: Session, data: ProductCreate, seller_id: int
-) -> ProductModel:
+def create_product(db: Session, data: ProductCreate, seller_id: int) -> ProductModel:
     product = ProductModel(seller_id=seller_id, **data.model_dump())
     ProductRepository(db).add(product)
     db.commit()
@@ -86,7 +84,5 @@ def list_purchases(db: Session) -> list[PurchaseModel]:
     return PurchaseRepository(db).list()
 
 
-def list_purchases_by_client(
-    db: Session, client_id: int
-) -> list[PurchaseModel]:
+def list_purchases_by_client(db: Session, client_id: int) -> list[PurchaseModel]:
     return PurchaseRepository(db).list_by_client(client_id)

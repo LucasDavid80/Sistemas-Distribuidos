@@ -2,7 +2,7 @@ PYTHON = python
 APP_DIR = backend
 PORT = 8001
 
-.PHONY: help run lint test test-unit test-integration clean compose-up compose-down compose-logs compose-ps compose-clean compose-shell compose-backend compose-db compose-test
+.PHONY: help run lint format format-check test test-unit test-integration clean db-upgrade db-migration db-current compose-up compose-down compose-logs compose-ps compose-clean compose-shell compose-backend compose-db compose-test
 
 help:
 	@echo "Uso: make [alvo]"
@@ -11,11 +11,16 @@ help:
 	@echo "  help             - Exibe os comandos disponíveis"
 	@echo "  run              - Executa a aplicação localmente com Poetry"
 	@echo "  lint             - Verifica a qualidade do código com Ruff"
+	@echo "  format           - Formata o código com Ruff"
+	@echo "  format-check     - Verifica a formatação com Ruff"
 	@echo "  test             - Executa todos os testes localmente"
 	@echo "  test-unit        - Executa apenas os testes unitários"
 	@echo "  test-integration - Executa apenas os testes de integração"
 	@echo "  test-verbose     - Executa todos os testes com saída detalhada"
 	@echo "  test-cov         - Executa testes e exibe relatório de cobertura (local)"
+	@echo "  db-upgrade       - Aplica as migrations até a revisão head"
+	@echo "  db-migration     - Gera uma migration com autogenerate (use msg='...')"
+	@echo "  db-current       - Exibe a revisão atual do banco"
 	@echo "  clean            - Limpa arquivos temporários locais (__pycache__)"
 	@echo ""
 	@echo "Alvos Docker Compose:"
@@ -39,6 +44,14 @@ lint:
 	@echo "Verificando a qualidade do código..."
 	cd $(APP_DIR) && poetry run ruff check .
 
+format:
+	@echo "Formatando o código..."
+	cd $(APP_DIR) && poetry run ruff format .
+
+format-check:
+	@echo "Verificando a formatação do código..."
+	cd $(APP_DIR) && poetry run ruff format --check .
+
 test:
 	@echo "Executando testes locais..."
 	cd $(APP_DIR) && poetry run pytest
@@ -58,6 +71,19 @@ test-verbose:
 test-cov:
 	@echo "Executando testes com relatório de cobertura..."
 	cd $(APP_DIR) && poetry run pytest --cov=app --cov-report=term-missing
+
+db-upgrade:
+	@echo "Aplicando migrations..."
+	cd $(APP_DIR) && poetry run alembic upgrade head
+
+db-migration:
+	@test -n "$(msg)" || (echo "Uso: make db-migration msg=\"descrição da migration\""; exit 1)
+	@echo "Gerando migration: $(msg)"
+	cd $(APP_DIR) && poetry run alembic revision --autogenerate -m "$(msg)"
+
+db-current:
+	@echo "Consultando revisão atual do banco..."
+	cd $(APP_DIR) && poetry run alembic current
 
 clean:
 	@echo "Limpando arquivos temporários locais..."

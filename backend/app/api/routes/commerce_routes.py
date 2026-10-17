@@ -27,9 +27,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 @product_router.post("/", response_model=Product, status_code=201)
-def create_product(
-    data: ProductCreate, user: CurrentUser, db: DbSession
-) -> Product:
+def create_product(data: ProductCreate, user: CurrentUser, db: DbSession) -> Product:
     require_role(user, UserRole.SELLER, UserRole.ADMIN)
     return commerce_service.create_product(db, data, user.id)
 
@@ -64,9 +62,7 @@ def update_product(
 
 
 @product_router.delete("/{product_id}", status_code=204)
-def delete_product(
-    product_id: int, user: CurrentUser, db: DbSession
-) -> None:
+def delete_product(product_id: int, user: CurrentUser, db: DbSession) -> None:
     product = commerce_service.get_product(db, product_id)
     if product is None:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
@@ -90,9 +86,7 @@ def deposit_balance(
 
 
 @purchase_router.post("/", response_model=Purchase, status_code=201)
-def create_purchase(
-    data: PurchaseCreate, user: CurrentUser, db: DbSession
-) -> Purchase:
+def create_purchase(data: PurchaseCreate, user: CurrentUser, db: DbSession) -> Purchase:
     require_role(user, UserRole.CLIENT)
     try:
         purchase = commerce_service.purchase_product(
