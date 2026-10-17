@@ -1,54 +1,92 @@
-from app.schemas.commerce_schema import Product, ProductCreate, ProductPatch, Purchase
-from app.services import user_service
+from decimal import Decimal
 
-products_db: dict[int, Product] = {}
-purchases_db: dict[int, Purchase] = {}
-next_product_id = 1
-next_purchase_id = 1
+from sqlalchemy.orm import Session
+
+from app.models.product import Product as ProductModel
+from app.models.purchase import Purchase as PurchaseModel
+from app.repositories.product_repository import ProductRepository
+from app.repositories.purchase_repository import PurchaseRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.commerce_schema import ProductCreate, ProductPatch
 
 
-def create_product(data: ProductCreate, seller_id: int) -> Product:
-    global next_product_id
-    product = Product(id=next_product_id, seller_id=seller_id, **data.model_dump())
-    products_db[next_product_id] = product
-    next_product_id += 1
+def create_product(
+    db: Session, data: ProductCreate, seller_id: int
+) -> ProductModel:
+    product = ProductModel(seller_id=seller_id, **data.model_dump())
+    ProductRepository(db).add(product)
+    db.commit()
+    db.refresh(product)
     return product
 
 
-def update_product(product_id: int, data: ProductPatch) -> Product | None:
-    product = products_db.get(product_id)
+def list_products(db: Session) -> list[ProductModel]:
+    return ProductRepository(db).list()
+
+
+def get_product(db: Session, product_id: int) -> ProductModel | None:
+    return ProductRepository(db).get(product_id)
+
+
+def update_product(
+    db: Session, product_id: int, data: ProductPatch
+) -> ProductModel | None:
+    repository = ProductRepository(db)
+    product = repository.get(product_id)
     if product is None:
         return None
-    updated = product.model_copy(update=data.model_dump(exclude_none=True))
-    products_db[product_id] = updated
-    return updated
+
+    for field, value in data.model_dump(exclude_none=True).items():
+        setattr(product, field, value)
+    db.commit()
+    db.refresh(product)
+    return product
 
 
-def purchase_product(product_id: int, client_id: int, quantity: int) -> Purchase | None:
-    global next_purchase_id
-    product = products_db.get(product_id)
-    client = user_service.get_user(client_id)
+def delete_product(db: Session, product_id: int) -> bool:
+    repository = ProductRepository(db)
+    product = repository.get(product_id)
+    if product is None:
+        return False
+
+    repository.delete(product)
+    db.commit()
+    return True
+
+
+def purchase_product(
+    db: Session, product_id: int, client_id: int, quantity: int
+) -> PurchaseModel | None:
+    product = ProductRepository(db).get(product_id)
+    client = UserRepository(db).get(client_id)
     if product is None or client is None:
         return None
     if product.estoque < quantity:
         raise ValueError("Estoque insuficiente")
+
     total = product.preco * quantity
     if client.saldo < total:
         raise ValueError("Saldo insuficiente")
 
-    products_db[product_id] = product.model_copy(
-        update={"estoque": product.estoque - quantity}
-    )
-    user_service.users_db[client_id] = client.model_copy(
-        update={"saldo": client.saldo - total}
-    )
-    purchase = Purchase(
-        id=next_purchase_id,
+    product.estoque -= quantity
+    client.saldo -= total
+    purchase = PurchaseModel(
         client_id=client_id,
         product_id=product_id,
         quantidade=quantity,
-        total=total,
+        total=Decimal(str(total)),
     )
-    purchases_db[next_purchase_id] = purchase
-    next_purchase_id += 1
+    PurchaseRepository(db).add(purchase)
+    db.commit()
+    db.refresh(purchase)
     return purchase
+
+
+def list_purchases(db: Session) -> list[PurchaseModel]:
+    return PurchaseRepository(db).list()
+
+
+def list_purchases_by_client(
+    db: Session, client_id: int
+) -> list[PurchaseModel]:
+    return PurchaseRepository(db).list_by_client(client_id)

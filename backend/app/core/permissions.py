@@ -1,13 +1,21 @@
-from fastapi import Header, HTTPException
+from typing import Annotated
 
-from app.schemas.user_schema import User, UserRole
+from fastapi import Depends, Header, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database.session import get_db
+from app.models.user import User
+from app.schemas.user_schema import UserRole
 from app.services.user_service import get_user
 
 
-def current_user(x_user_id: int | None = Header(None, alias="X-User-Id")) -> User:
+def current_user(
+    x_user_id: Annotated[int | None, Header(alias="X-User-Id")],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
     if x_user_id is None:
         raise HTTPException(status_code=401, detail="Usuário não autenticado")
-    user = get_user(x_user_id)
+    user = get_user(db, x_user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="Usuário não autenticado")
     return user
