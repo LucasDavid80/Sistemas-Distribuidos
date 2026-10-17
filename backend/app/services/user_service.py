@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
 from app.models.user import User as UserModel
@@ -54,7 +56,7 @@ def add_balance(db: Session, user_id: int, amount: float) -> UserModel | None:
     if user is None:
         return None
 
-    user.saldo += amount
+    user.saldo += Decimal(str(amount))
     db.commit()
     db.refresh(user)
     return user
