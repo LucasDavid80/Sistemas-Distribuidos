@@ -1,16 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.services import user_service as user_service
-
-
-@pytest.fixture
-def client():
-    user_service.users_db.clear()
-    user_service.next_id = 1
-    return TestClient(app)
-
 
 def test_create_and_list_users(client):
     response = client.post(
@@ -25,6 +15,26 @@ def test_create_and_list_users(client):
         "idade": 25,
     }
     assert client.get("/users/").json() == [response.json()]
+
+
+def test_user_persists_after_api_client_restart(client, db):
+    created = client.post(
+        "/users/",
+        json={
+            "nome": "Persisted",
+            "email": "persisted@email.com",
+            "idade": 25,
+        },
+    )
+    user_id = created.json()["id"]
+
+    client.close()
+
+    with TestClient(client.app) as restarted_client:
+        response = restarted_client.get(f"/users/{user_id}")
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "persisted@email.com"
 
 
 def test_read_update_and_delete_user(client):

@@ -1,21 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
-from app.services import commerce_service, user_service
-
-
-@pytest.fixture
-def client():
-    user_service.users_db.clear()
-    user_service.next_id = 1
-    commerce_service.products_db.clear()
-    commerce_service.purchases_db.clear()
-    commerce_service.next_product_id = 1
-    commerce_service.next_purchase_id = 1
-    return TestClient(app)
-
-
 def create_user(client, nome, email, role):
     response = client.post(
         "/users/",
