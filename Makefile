@@ -247,7 +247,11 @@ e2e:
 	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml up -d --build
 	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml exec -T api poetry run alembic upgrade head
 	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml exec -T api poetry run python -m scripts.create_demo_seller
+ifeq ($(OS),Windows_NT)
 	set E2E_BASE_URL=http://127.0.0.1:5174&& set VITE_API_URL=http://127.0.0.1:8002&& set VITE_USER_ID=1&& npm --prefix frontend run test:e2e
+else
+	E2E_BASE_URL=http://127.0.0.1:5174 VITE_API_URL=http://127.0.0.1:8002 VITE_USER_ID=1 npm --prefix frontend run test:e2e
+endif
 	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml down -v
 
 check-all:
