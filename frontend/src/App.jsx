@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductForm } from "./components/ProductForm";
 import { ProductList } from "./components/ProductList";
+import { createProduct, listProducts } from "./services/products";
 
 export default function App() {
   const [products, setProducts] = useState([]);
   const [screen, setScreen] = useState("home");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  function addProduct(product) {
-    setProducts((current) => [
-      ...current,
-      { ...product, id: crypto.randomUUID() },
-    ]);
+  useEffect(() => {
+    if (screen !== "buyer") return;
+
+    setLoading(true);
+    setLoadError("");
+    listProducts()
+      .then(setProducts)
+      .catch((error) => setLoadError(error.message))
+      .finally(() => setLoading(false));
+  }, [screen]);
+
+  async function addProduct(product) {
+    const created = await createProduct(product);
+    setProducts((current) => [...current, created]);
   }
 
   if (screen === "buyer") {
@@ -27,7 +39,9 @@ export default function App() {
           <h2 className="mb-4 text-2xl font-bold" id="products-heading">
             Produtos disponíveis
           </h2>
-          <ProductList products={products} />
+          {loading && <p role="status">Carregando produtos...</p>}
+          {loadError && <p role="alert">{loadError}</p>}
+          {!loading && !loadError && <ProductList products={products} />}
         </section>
       </MarketplacePage>
     );

@@ -8,6 +8,7 @@ from sqlalchemy.exc import ArgumentError
 @dataclass(frozen=True)
 class Settings:
     database_url: str
+    cors_origins: list[str]
 
 
 def get_settings() -> Settings:
@@ -29,4 +30,13 @@ def get_settings() -> Settings:
     ):
         raise RuntimeError("A variável DATABASE_URL contém uma URL inválida.")
 
-    return Settings(database_url=database_url)
+    cors_origins = [
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173",
+        ).split(",")
+        if origin.strip()
+    ]
+
+    return Settings(database_url=database_url, cors_origins=cors_origins)

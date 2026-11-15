@@ -7,19 +7,29 @@ export function ProductForm({ onAdd }) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const result = validateProduct({ name, description, price, stock });
     setErrors(result.errors);
 
     if (Object.keys(result.errors).length > 0) return;
 
-    onAdd(result.values);
-    setName("");
-    setDescription("");
-    setPrice("");
-    setStock("");
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      await onAdd(result.values);
+      setName("");
+      setDescription("");
+      setPrice("");
+      setStock("");
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -97,10 +107,12 @@ export function ProductForm({ onAdd }) {
       </div>
       <button
         className="rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white transition hover:bg-brand-700"
+        disabled={submitting}
         type="submit"
       >
-        Publicar produto
+        {submitting ? "Publicando..." : "Publicar produto"}
       </button>
+      {submitError && <p role="alert">{submitError}</p>}
     </form>
   );
 }

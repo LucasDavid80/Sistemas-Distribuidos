@@ -2,7 +2,7 @@ PYTHON = python
 APP_DIR = backend
 PORT = 8001
 
-.PHONY: help frontend backend bd docker run lint format format-check test test-unit test-integration clean db-upgrade db-migration db-current compose-up compose-down compose-logs compose-ps compose-clean compose-shell compose-backend compose-db compose-test frontend-install frontend-dev frontend-lint frontend-format frontend-check frontend-test frontend-test-e2e frontend-build check-all
+.PHONY: help frontend backend bd docker run lint format format-check test test-unit test-integration clean db-upgrade db-migration db-current create-demo-seller up-build down compose-up compose-down compose-logs compose-ps compose-clean compose-shell compose-api compose-db compose-test frontend-install frontend-dev frontend-lint frontend-format frontend-check frontend-test frontend-test-e2e frontend-build e2e check-all
 
 ifeq ($(filter frontend,$(MAKECMDGOALS)),frontend)
 help:
@@ -52,7 +52,7 @@ help:
 	@echo "Alvos Docker Compose:"
 	@echo "  compose-up       - Constrói e sobe todos os serviços em segundo plano"
 	@echo "  compose-down     - Para e remove todos os contêineres e redes"
-	@echo "  compose-backend  - Sobe apenas o serviço de backend (e dependências)"
+	@echo "  compose-api      - Sobe apenas o serviço da API (e dependências)"
 	@echo "  compose-db       - Sobe apenas o banco de dados PostgreSQL"
 	@echo "  compose-logs     - Acompanha os logs dos contêineres em tempo real"
 	@echo "  compose-ps       - Exibe o status e as portas dos contêineres"
@@ -102,7 +102,7 @@ help:
 	@echo "Alvos Docker Compose:"
 	@echo "  compose-up       - Constrói e sobe todos os serviços em segundo plano"
 	@echo "  compose-down     - Para e remove todos os contêineres e redes"
-	@echo "  compose-backend  - Sobe apenas o serviço de backend (e dependências)"
+	@echo "  compose-api      - Sobe apenas o serviço da API (e dependências)"
 	@echo "  compose-db       - Sobe apenas o banco de dados PostgreSQL"
 	@echo "  compose-logs     - Acompanha os logs dos contêineres em tempo real"
 	@echo "  compose-ps       - Exibe o status e as portas dos contêineres"
@@ -162,6 +162,10 @@ db-current:
 	@echo "Consultando revisão atual do banco..."
 	cd $(APP_DIR) && poetry run alembic current
 
+create-demo-seller:
+	@echo "Criando ou verificando o vendedor demo..."
+	docker compose exec api poetry run python -m scripts.create_demo_seller
+
 clean:
 	@echo "Limpando arquivos temporários locais..."
 	cd $(APP_DIR) && find . -type d -name "__pycache__" -prune -exec rm -rf {} +
@@ -173,13 +177,17 @@ compose-up:
 	@echo "Subindo todos os serviços com Docker Compose..."
 	docker compose up -d --build
 
+up-build: compose-up
+
+down: compose-down
+
 compose-down:
 	@echo "Parando todos os serviços..."
 	docker compose down
 
-compose-backend:
-	@echo "Subindo o serviço de backend..."
-	docker compose up -d --build backend
+compose-api:
+	@echo "Subindo o serviço da API..."
+	docker compose up -d --build api
 
 compose-db:
 	@echo "Subindo apenas o banco de dados PostgreSQL..."
@@ -235,6 +243,13 @@ frontend-test-e2e:
 frontend-build:
 	npm --prefix frontend run build
 
+e2e:
+	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml up -d --build
+	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml exec -T api poetry run alembic upgrade head
+	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml exec -T api poetry run python -m scripts.create_demo_seller
+	set E2E_BASE_URL=http://127.0.0.1:5174&& set VITE_API_URL=http://127.0.0.1:8002&& set VITE_USER_ID=1&& npm --prefix frontend run test:e2e
+	docker compose -p c216-e2e -f docker-compose.yml -f docker-compose.e2e.yml down -v
+
 check-all:
 	$(MAKE) lint
 	$(MAKE) format-check
@@ -242,4 +257,4 @@ check-all:
 	$(MAKE) frontend-check
 	$(MAKE) frontend-test
 	$(MAKE) frontend-build
-	$(MAKE) frontend-test-e2e
+	$(MAKE) e2e

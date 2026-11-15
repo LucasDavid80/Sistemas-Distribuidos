@@ -4,13 +4,20 @@ on:
   pull_request:
     paths:
       - "frontend/**"
+      - "backend/**"
+      - "docker-compose*.yml"
+      - "Makefile"
       - ".github/workflows/ci-frontend.yml"
   push:
     branches:
       - main
       - pratica-6
+      - pratica-7
     paths:
       - "frontend/**"
+      - "backend/**"
+      - "docker-compose*.yml"
+      - "Makefile"
       - ".github/workflows/ci-frontend.yml"
 
 jobs:
@@ -42,7 +49,8 @@ jobs:
       - name: Instalar Chromium
         run: npx playwright install --with-deps chromium
       - name: Executar testes E2E
-        run: npm run test:e2e
+        working-directory: .
+        run: make e2e
       - name: Enviar relatório do Playwright
         if: failure()
         uses: actions/upload-artifact@v4
