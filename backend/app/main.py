@@ -1,6 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes.cliente_routes import clientes_db as _clientes_db
 from app.api.routes.cliente_routes import router as clientes_router
 from app.api.routes.commerce_routes import (
     admin_router,
@@ -10,10 +10,17 @@ from app.api.routes.commerce_routes import (
 )
 from app.api.routes.root_routes import router as root_router
 from app.api.routes.user_routes import router as users_router
-
-clientes_db = _clientes_db
+from app.core.config import get_settings
 
 app = FastAPI(title="Sistema de Compra e Venda")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-User-Id"],
+)
+
 app.include_router(users_router)
 app.include_router(clientes_router)
 app.include_router(client_router)

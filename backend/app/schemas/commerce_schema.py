@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BalanceDeposit(BaseModel):
@@ -13,6 +13,8 @@ class ProductCreate(BaseModel):
 
 
 class Product(ProductCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     seller_id: int
 
@@ -30,6 +32,8 @@ class PurchaseCreate(BaseModel):
 
 
 class Purchase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     client_id: int
     product_id: int
