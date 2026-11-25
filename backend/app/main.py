@@ -9,15 +9,16 @@ from app.api.routes.commerce_routes import (
     purchase_router,
 )
 from app.api.routes.root_routes import router as root_router
+from app.api.routes.task_routes import project_router, task_router
 from app.api.routes.user_routes import router as users_router
 from app.core.config import get_settings
 
-app = FastAPI(title="Sistema de Compra e Venda")
+app = FastAPI(title="Gerenciador de Tarefas e Projetos - C216")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "X-User-Id"],
 )
 
@@ -27,4 +28,6 @@ app.include_router(client_router)
 app.include_router(product_router)
 app.include_router(purchase_router)
 app.include_router(admin_router)
+app.include_router(task_router)
+app.include_router(project_router)
 app.include_router(root_router)
