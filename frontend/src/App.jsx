@@ -1,119 +1,194 @@
-import { useEffect, useState } from "react";
-import { ProductForm } from "./components/ProductForm";
-import { ProductList } from "./components/ProductList";
-import { createProduct, listProducts } from "./services/products";
+import { useCallback, useEffect, useState } from "react";
+import { TaskForm } from "./components/TaskForm";
+import { TaskList } from "./components/TaskList";
+import { TaskMetrics } from "./components/TaskMetrics";
+import {
+  createTask,
+  deleteTask,
+  getTaskMetrics,
+  listTasks,
+  updateTask,
+  updateTaskStatus,
+} from "./services/tasks";
 
 export default function App() {
-  const [products, setProducts] = useState([]);
-  const [screen, setScreen] = useState("home");
+  const [tasks, setTasks] = useState([]);
+  const [metrics, setMetrics] = useState({
+    total: 0,
+    pendentes: 0,
+    em_progresso: 0,
+    concluidas: 0,
+    taxa_conclusao: 0,
+  });
+  const [filters, setFilters] = useState({
+    status: "",
+    prioridade: "",
+    search: "",
+  });
+  const [editingTask, setEditingTask] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
+  const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
+
+  const loadData = useCallback(
+    async (currentFilters = filters) => {
+      setLoading(true);
+      setError("");
+      try {
+        const [tasksData, metricsData] = await Promise.all([
+          listTasks(currentFilters),
+          getTaskMetrics(),
+        ]);
+        setTasks(tasksData);
+        setMetrics(metricsData);
+      } catch (err) {
+        setError(err.message || "Erro ao carregar os dados.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters],
+  );
 
   useEffect(() => {
-    if (screen !== "buyer") return;
+    loadData(filters);
+  }, [filters, loadData]);
 
-    setLoading(true);
-    setLoadError("");
-    listProducts()
-      .then(setProducts)
-      .catch((error) => setLoadError(error.message))
-      .finally(() => setLoading(false));
-  }, [screen]);
-
-  async function addProduct(product) {
-    const created = await createProduct(product);
-    setProducts((current) => [...current, created]);
+  function notify(msg) {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(""), 4000);
   }
 
-  if (screen === "buyer") {
-    return (
-      <MarketplacePage
-        description="Explore as ofertas publicadas por vendedores da comunidade."
-        onBack={() => setScreen("home")}
-        title="Encontre o que você precisa"
-      >
-        <section aria-labelledby="products-heading">
-          <p className="text-sm font-semibold text-brand-700">
-            Área do comprador
-          </p>
-          <h2 className="mb-4 text-2xl font-bold" id="products-heading">
-            Produtos disponíveis
-          </h2>
-          {loading && <p role="status">Carregando produtos...</p>}
-          {loadError && <p role="alert">{loadError}</p>}
-          {!loading && !loadError && <ProductList products={products} />}
-        </section>
-      </MarketplacePage>
-    );
+  async function handleSaveTask(values, id) {
+    if (id) {
+      await updateTask(id, values);
+      notify("Tarefa atualizada com sucesso!");
+      setEditingTask(null);
+    } else {
+      await createTask(values);
+      notify("Tarefa criada com sucesso!");
+    }
+    await loadData(filters);
   }
 
-  if (screen === "seller") {
-    return (
-      <MarketplacePage
-        description="Cadastre seus produtos. Nesta prática, os anúncios ficam apenas neste navegador."
-        onBack={() => setScreen("home")}
-        title="Publique suas ofertas"
-      >
-        <ProductForm onAdd={addProduct} />
-      </MarketplacePage>
-    );
+  async function handleStatusChange(id, newStatus) {
+    try {
+      await updateTaskStatus(id, newStatus);
+      notify("Status da tarefa atualizado!");
+      await loadData(filters);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDeleteTask(id) {
+    try {
+      await deleteTask(id);
+      notify("Tarefa removida com sucesso!");
+      if (editingTask?.id === id) {
+        setEditingTask(null);
+      }
+      await loadData(filters);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl items-center p-4 sm:p-8">
-      <section className="w-full rounded-3xl bg-slate-900 p-6 text-white shadow-xl sm:p-12">
-        <p className="text-sm font-semibold tracking-wide text-emerald-300 uppercase">
-          Marketplace local
-        </p>
-        <h1 className="mt-3 max-w-2xl text-4xl font-bold sm:text-5xl">
-          O que você deseja fazer hoje?
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg text-slate-300">
-          Escolha seu perfil para publicar produtos ou explorar as ofertas da
-          comunidade.
-        </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <button
-            className="rounded-2xl bg-brand-600 p-6 text-left transition hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
-            onClick={() => setScreen("buyer")}
-            type="button"
-          >
-            <span className="block text-xl font-bold">Sou comprador</span>
-            <span className="mt-2 block text-emerald-50">
-              Ver produtos disponíveis e encontrar ofertas.
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      {/* Top Header */}
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 font-black text-lg text-white shadow-sm">
+              TF
             </span>
-          </button>
-          <button
-            className="rounded-2xl border border-slate-600 p-6 text-left transition hover:border-slate-400 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-400"
-            onClick={() => setScreen("seller")}
-            type="button"
-          >
-            <span className="block text-xl font-bold">Sou vendedor</span>
-            <span className="mt-2 block text-slate-300">
-              Cadastrar um produto para a comunidade encontrar.
-            </span>
-          </button>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                TaskFlow
+              </h1>
+              <p className="text-xs text-slate-500">
+                Gestão Distribuída de Tarefas & Projetos — C216
+              </p>
+            </div>
+          </div>
+          <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 text-xs">
+            ● Backend Online
+          </span>
         </div>
-      </section>
-    </main>
-  );
-}
-
-function MarketplacePage({ children, description, onBack, title }) {
-  return (
-    <main className="mx-auto min-h-screen max-w-5xl p-4 sm:p-8">
-      <header className="mb-8 rounded-2xl bg-slate-900 p-6 text-white sm:p-10">
-        <button
-          className="text-sm font-semibold text-emerald-300 underline underline-offset-4"
-          onClick={onBack}
-          type="button"
-        >
-          ← Voltar ao início
-        </button>
-        <h1 className="mt-5 text-3xl font-bold sm:text-4xl">{title}</h1>
-        <p className="mt-3 max-w-2xl text-slate-300">{description}</p>
       </header>
-      {children}
-    </main>
+
+      {/* Main Container */}
+      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+        {/* Notificações / Feedbacks */}
+        {feedback && (
+          <div
+            className="flex items-center justify-between rounded-xl bg-emerald-50 p-4 text-emerald-800 text-sm shadow-sm"
+            role="status"
+          >
+            <span>{feedback}</span>
+            <button
+              className="font-bold text-emerald-900 hover:underline"
+              onClick={() => setFeedback("")}
+              type="button"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div
+            className="flex items-center justify-between rounded-xl bg-rose-50 p-4 text-rose-800 text-sm shadow-sm"
+            role="alert"
+          >
+            <span>{error}</span>
+            <button
+              className="font-bold text-rose-900 hover:underline"
+              onClick={() => setError("")}
+              type="button"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
+
+        {/* Dashboard de Métricas */}
+        <TaskMetrics metrics={metrics} />
+
+        {/* Layout de Duas Colunas: Formulário à esquerda, Listagem à direita */}
+        <div className="grid items-start gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <TaskForm
+              editingTask={editingTask}
+              onCancelEdit={() => setEditingTask(null)}
+              onSave={handleSaveTask}
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div
+                className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500 shadow-sm"
+                role="status"
+              >
+                <p className="animate-pulse font-medium">
+                  Carregando tarefas do sistema...
+                </p>
+              </div>
+            ) : (
+              <TaskList
+                filters={filters}
+                onDelete={handleDeleteTask}
+                onEdit={setEditingTask}
+                onFilterChange={setFilters}
+                onStatusChange={handleStatusChange}
+                tasks={tasks}
+              />
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
