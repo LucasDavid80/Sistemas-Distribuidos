@@ -8,7 +8,9 @@ from app.schemas.user_schema import UserRole
 
 if TYPE_CHECKING:
     from app.models.product import Product
+    from app.models.project import Project
     from app.models.purchase import Purchase
+    from app.models.task import Task
 
 
 class User(Base):
@@ -31,3 +33,5 @@ class User(Base):
 
     products: Mapped[list["Product"]] = relationship(back_populates="seller")
     purchases: Mapped[list["Purchase"]] = relationship(back_populates="client")
+    projects: Mapped[list["Project"]] = relationship(back_populates="owner")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="user")
