@@ -11,5 +11,6 @@ export default defineConfig({
       "tests/unit/**/*.test.{js,jsx}",
       "tests/integration/**/*.test.{js,jsx}",
     ],
+    pool: "threads",
   },
 });

@@ -32,6 +32,35 @@ describe("validateTask", () => {
       categoria: "Backend",
     });
   });
+
+  it("rejeita título que ultrapassa o limite de caracteres", () => {
+    const { errors } = validateTask({ titulo: "A".repeat(151) });
+    expect(errors.titulo).toMatch(/máximo/i);
+  });
+
+  it("rejeita descrição que ultrapassa o limite de caracteres", () => {
+    const { errors } = validateTask({
+      titulo: "Título válido",
+      descricao: "X".repeat(1001),
+    });
+    expect(errors.descricao).toMatch(/máximo/i);
+  });
+
+  it("rejeita categoria que ultrapassa o limite de caracteres", () => {
+    const { errors } = validateTask({
+      titulo: "Título válido",
+      categoria: "C".repeat(61),
+    });
+    expect(errors.categoria).toMatch(/máximo/i);
+  });
+
+  it("usa 'Geral' como categoria padrão quando categoria está vazia", () => {
+    const { values } = validateTask({
+      titulo: "Título válido",
+      categoria: "   ",
+    });
+    expect(values.categoria).toBe("Geral");
+  });
 });
 
 describe("validateProduct", () => {
@@ -63,5 +92,45 @@ describe("validateProduct", () => {
       price: 49.9,
       stock: 2,
     });
+  });
+
+  it("rejeita nome que ultrapassa o limite de caracteres", () => {
+    const { errors } = validateProduct({
+      name: "N".repeat(121),
+      description: "",
+      price: "10",
+      stock: "1",
+    });
+    expect(errors.name).toMatch(/máximo/i);
+  });
+
+  it("rejeita preço não numérico", () => {
+    const { errors } = validateProduct({
+      name: "Produto",
+      description: "",
+      price: "abc",
+      stock: "5",
+    });
+    expect(errors.price).toBeDefined();
+  });
+
+  it("rejeita estoque decimal", () => {
+    const { errors } = validateProduct({
+      name: "Produto",
+      description: "",
+      price: "10",
+      stock: "1.5",
+    });
+    expect(errors.stock).toBeDefined();
+  });
+
+  it("rejeita estoque vazio", () => {
+    const { errors } = validateProduct({
+      name: "Produto",
+      description: "",
+      price: "10",
+      stock: "",
+    });
+    expect(errors.stock).toBeDefined();
   });
 });
